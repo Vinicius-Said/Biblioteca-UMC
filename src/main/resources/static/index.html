@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Usuário - Biblioteca</title>
+    <style>
+        /* CSS para dar um "charme" */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .form-container {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* Garante que o padding não aumente a largura total */
+        }
+
+        button {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #message {
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .success {
+            color: #28a745;
+        }
+
+        .error {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h1>Cadastrar Novo Usuário - Biblioteca</h1>
+    <form id="registrationForm">
+        <div class="input-group">
+            <label for="name">Nome Completo</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div class="input-group">
+            <label for="email">E-mail</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        <div class="input-group">
+            <label for="password">Senha</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <div class="input-group">
+            <label for="document">Documento (CPF - 11 dígitos)</label>
+            <input type="text" id="document" name="document" required>
+        </div>
+        <button type="submit">Cadastrar</button>
+    </form>
+    <div id="message"></div>
+</div>
+
+<script>
+    // JavaScript para enviar os dados para a API
+    const form = document.getElementById('registrationForm');
+    const messageDiv = document.getElementById('message');
+
+    form.addEventListener('submit', async (event) => {
+        // Previne o comportamento padrão do formulário (recarregar a página)
+        event.preventDefault();
+
+        // Pega os valores dos campos do formulário
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const documentValue = document.getElementById('document').value;
+
+        // Cria o objeto de dados para enviar como JSON
+        const userData = {
+            name: name,
+            email: email,
+            password: password,
+            document: documentValue
+        };
+
+        try {
+            // Faz a requisição POST para a nossa API
+            const response = await fetch('http://localhost:8080/api/users/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            });
+
+            // Limpa mensagens antigas
+            messageDiv.textContent = '';
+            messageDiv.className = '';
+
+            // Pega a resposta do servidor (seja sucesso ou erro)
+            const responseData = await response.text();
+
+            if (response.ok) { // Status 2xx (sucesso)
+                messageDiv.textContent = responseData;
+                messageDiv.classList.add('success');
+                form.reset(); // Limpa o formulário
+            } else { // Status 4xx ou 5xx (erro)
+                // Tenta formatar a resposta de erro se for JSON
+                try {
+                    const errorJson = JSON.parse(responseData);
+                    let formattedError = '';
+                    for (const key in errorJson) {
+                        formattedError += `${errorJson[key]}\n`;
+                    }
+                    messageDiv.textContent = formattedError;
+                } catch (e) {
+                     messageDiv.textContent = responseData; // Se for texto simples
+                }
+                messageDiv.classList.add('error');
+            }
+
+        } catch (error) {
+            // Erro de rede ou a API está fora do ar
+            messageDiv.textContent = 'Erro ao conectar com o servidor. Tente novamente mais tarde.';
+            messageDiv.classList.add('error');
+            console.error('Erro na requisição:', error);
+        }
+    });
+</script>
+</body>
+</html>

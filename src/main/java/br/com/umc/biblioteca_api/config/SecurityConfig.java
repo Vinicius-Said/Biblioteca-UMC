@@ -17,18 +17,20 @@ public class SecurityConfig {
 
     // Dentro da classe SecurityConfig.java
 
+    // Dentro da classe SecurityConfig.java
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
                 .authorizeHttpRequests(authorize -> authorize
+                        // A ORDEM IMPORTA! As regras mais específicas vêm primeiro.
+                        .requestMatchers("/", "/index.html").permitAll() // <-- ESTA É A LINHA NOVA E CRUCIAL
                         .requestMatchers("/api/users/register").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        // ADICIONADO: Permite que o Spring Boot exiba as páginas de erro
                         .requestMatchers("/error").permitAll()
-                        // Exige autenticação para qualquer outra requisição
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated() // "Qualquer outra coisa, bloqueie"
                 );
         return http.build();
     }
