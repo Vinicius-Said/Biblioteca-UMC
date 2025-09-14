@@ -100,77 +100,91 @@
             <input type="password" id="password" name="password" required>
         </div>
         <div class="input-group">
-            <label for="document">Documento (CPF - 11 dígitos)</label>
-            <input type="text" id="document" name="document" required>
+            <label for="cpf">CPF (apenas números)</label>
+            <input type="text" id="cpf" name="cpf" required maxlength="11" pattern="\d{11}">
         </div>
+
+        <div class="input-group">
+            <label for="document">Documento (PDF)</label>
+            <input type="file" id="document" name="document" required accept=".pdf">
+        </div>
+
         <button type="submit">Cadastrar</button>
     </form>
     <div id="message"></div>
 </div>
 
 <script>
-    // JavaScript para enviar os dados para a API
+    // Seleciona o formulário e o elemento <div> onde as mensagens serão exibidas
     const form = document.getElementById('registrationForm');
     const messageDiv = document.getElementById('message');
 
+    // Adiciona um "ouvinte" que espera pelo evento de "submit" (envio) do formulário
     form.addEventListener('submit', async (event) => {
-        // Previne o comportamento padrão do formulário (recarregar a página)
+        // Previne o comportamento padrão do formulário, que é recarregar a página
         event.preventDefault();
 
-        // Pega os valores dos campos do formulário
-        const name = document.getElementById('name').value;
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const documentValue = document.getElementById('document').value;
+        // Cria um objeto FormData, que é ideal para enviar arquivos e dados de formulário juntos
+        const formData = new FormData();
 
-        // Cria o objeto de dados para enviar como JSON
-        const userData = {
-            name: name,
-            email: email,
-            password: password,
-            document: documentValue
-        };
+        // Adiciona os valores dos campos de texto ao FormData
+        formData.append('name', document.getElementById('name').value);
+        formData.append('email', document.getElementById('email').value);
+        formData.append('password', document.getElementById('password').value);
+        formData.append('cpf', document.getElementById('cpf').value);
+
+        // Pega o campo de arquivo e adiciona o primeiro arquivo selecionado ao FormData
+        const documentInput = document.getElementById('document');
+        if (documentInput.files.length > 0) {
+            formData.append('document', documentInput.files[0]);
+        } else {
+            // Opcional: Lida com o caso de nenhum arquivo ser selecionado, se o campo não for 'required'
+            messageDiv.textContent = 'Por favor, anexe o documento.';
+            messageDiv.className = 'error';
+            return;
+        }
+
+        // Limpa mensagens de status antigas antes de fazer a nova requisição
+        messageDiv.textContent = '';
+        messageDiv.className = '';
 
         try {
-            // Faz a requisição POST para a nossa API
+            // Faz a requisição POST para a API, enviando o FormData no corpo
             const response = await fetch('http://localhost:8080/api/users/register', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(userData)
+                // IMPORTANTE: Ao usar FormData, não definimos o 'Content-Type' manualmente.
+                // O navegador faz isso por nós, incluindo os limites (boundaries) necessários.
+                body: formData
             });
 
-            // Limpa mensagens antigas
-            messageDiv.textContent = '';
-            messageDiv.className = '';
-
-            // Pega a resposta do servidor (seja sucesso ou erro)
+            // Pega a resposta do servidor como texto
             const responseData = await response.text();
 
-            if (response.ok) { // Status 2xx (sucesso)
+            if (response.ok) { // Se a resposta teve status 2xx (ex: 201 Created), foi um sucesso
                 messageDiv.textContent = responseData;
-                messageDiv.classList.add('success');
-                form.reset(); // Limpa o formulário
-            } else { // Status 4xx ou 5xx (erro)
-                // Tenta formatar a resposta de erro se for JSON
+                messageDiv.className = 'success'; // Aplica o estilo de sucesso (verde)
+                form.reset(); // Limpa os campos do formulário
+            } else { // Se a resposta teve status 4xx ou 5xx, foi um erro
+                // Tenta interpretar a resposta como JSON (caso do nosso GlobalExceptionHandler)
                 try {
                     const errorJson = JSON.parse(responseData);
                     let formattedError = '';
+                    // Concatena todas as mensagens de erro do JSON
                     for (const key in errorJson) {
                         formattedError += `${errorJson[key]}\n`;
                     }
                     messageDiv.textContent = formattedError;
                 } catch (e) {
-                     messageDiv.textContent = responseData; // Se for texto simples
+                     // Se não for JSON, mostra como texto simples
+                     messageDiv.textContent = responseData;
                 }
-                messageDiv.classList.add('error');
+                messageDiv.className = 'error'; // Aplica o estilo de erro (vermelho)
             }
 
         } catch (error) {
-            // Erro de rede ou a API está fora do ar
-            messageDiv.textContent = 'Erro ao conectar com o servidor. Tente novamente mais tarde.';
-            messageDiv.classList.add('error');
+            // Este bloco é executado se houver um erro de rede (ex: API fora do ar)
+            messageDiv.textContent = 'Erro ao conectar com o servidor. Verifique se a API está rodando.';
+            messageDiv.className = 'error';
             console.error('Erro na requisição:', error);
         }
     });

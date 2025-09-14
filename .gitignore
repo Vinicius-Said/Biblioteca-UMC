@@ -34,3 +34,5 @@ build/
 
 # Arquivos de Banco de Dados H2
 *.mv.db
+
+/uploads/

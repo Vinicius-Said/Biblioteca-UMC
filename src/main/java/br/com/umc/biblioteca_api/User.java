@@ -34,8 +34,11 @@ public class User {
     private String password;
 
     // --- LINHAS IMPORTANTES PARA A VALIDAÇÃO DO DOCUMENTO ---
-    @NotBlank(message = "O documento é obrigatório.")
-    @Pattern(regexp = "^\\d{11}$", message = "O documento deve conter exatamente 11 dígitos.")
-    private String document;
+    @NotBlank(message = "O CPF é obrigatório.")
+    @Pattern(regexp = "^\\d{11}$", message = "O CPF deve conter exatamente 11 dígitos.")
+    private String cpf;
+
+    // Campo para guardar o nome do arquivo do comprovante
+    private String documentUrl;
     // --------------------------------------------------------
 }

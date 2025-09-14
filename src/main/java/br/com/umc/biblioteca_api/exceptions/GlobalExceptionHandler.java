@@ -30,7 +30,16 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
 
+
         // Retorna o mapa, que o Spring converterá para JSON
         return errors;
+    }
+    @ExceptionHandler(FileValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleFileValidationException(FileValidationException ex) {
+        Map<String, String> error = new HashMap<>();
+        // A chave do erro pode ser "file" ou "document", dependendo do que fizer mais sentido
+        error.put("document", ex.getMessage());
+        return error;
     }
 }
